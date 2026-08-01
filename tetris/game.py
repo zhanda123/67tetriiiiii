@@ -4,8 +4,8 @@ from .board import Board
 from .pieces import Piece, Randomizer, PIECE_TYPES
 from .constants import (
     COLS, BUFFER_ROWS, DAS_DELAY, DAS_REPEAT, SOFT_DROP_FRAMES,
-    LOCK_DELAY, LINE_CLEAR_FRAMES, frames_per_row, score_for_lines,
-    lines_to_level,
+    LOCK_DELAY, LINE_CLEAR_FRAMES, MAX_STARTING_LEVEL, frames_per_row,
+    score_for_lines, lines_to_level,
 )
 
 MENU = "menu"
@@ -18,7 +18,7 @@ GAME_OVER = "game_over"
 class Game:
     def __init__(self):
         self.state = MENU
-        self.starting_level = 0
+        self.starting_level = 1
         self.randomizer = Randomizer()
         self.reset()
 
@@ -45,7 +45,7 @@ class Game:
 
     # -- setup -----------------------------------------------------
     def start(self, level: int):
-        self.starting_level = max(0, min(9, level))
+        self.starting_level = max(0, min(MAX_STARTING_LEVEL, level))
         self.reset()
         self.state = PLAYING
 

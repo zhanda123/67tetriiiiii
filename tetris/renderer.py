@@ -223,12 +223,13 @@ def render(surface, game, fonts):
         panel.center = (WIDTH // 2, HEIGHT // 2)
         pygame.draw.rect(surface, PANEL_BG, panel)
         pygame.draw.rect(surface, CYAN_BORDER, panel, 4)
+        level_hint = "KILL SCREEN" if game.starting_level >= 29 else ("near kill screen" if game.starting_level >= 19 else "")
         draw_overlay_text(
             surface, fonts,
             [
                 (fonts.huge, "TETRIS", TEXT_ORANGE),
-                (fonts.med, f"Starting Level: {game.starting_level}", WHITE),
-                (fonts.small, "UP / DOWN change level", GRAY),
+                (fonts.med, f"Starting Level: {game.starting_level:02d}  {level_hint}", WHITE),
+                (fonts.small, "UP / DOWN change level (0-29)", GRAY),
                 (fonts.small, "ENTER to start", GRAY),
                 (fonts.small, "LEFT/RIGHT move  Z/X rotate  DOWN soft drop", GRAY),
             ],

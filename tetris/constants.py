@@ -6,6 +6,11 @@ COLS = 10
 ROWS = 20
 BUFFER_ROWS = 4  # hidden rows above the visible field, used for spawning
 
+# Highest starting level selectable from the menu. 29 is the classic NES
+# "kill screen" speed (1 frame per row) -- picking it lets you practice
+# the tournament-relevant late game without grinding ~300 lines first.
+MAX_STARTING_LEVEL = 29
+
 CELL = 24  # pixel size of one grid cell
 
 # --- Timing (in frames, at FPS=60, matching the original NES feel) ---

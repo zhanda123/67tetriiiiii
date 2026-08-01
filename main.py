@@ -8,13 +8,13 @@ import sys
 import pygame
 
 from tetris.game import Game, MENU, PLAYING, PAUSED, GAME_OVER
-from tetris.constants import FPS
+from tetris.constants import FPS, MAX_STARTING_LEVEL
 from tetris import renderer
 
 
 def handle_menu_keys(game, event):
     if event.key in (pygame.K_UP, pygame.K_RIGHT):
-        game.starting_level = min(9, game.starting_level + 1)
+        game.starting_level = min(MAX_STARTING_LEVEL, game.starting_level + 1)
     elif event.key in (pygame.K_DOWN, pygame.K_LEFT):
         game.starting_level = max(0, game.starting_level - 1)
     elif event.key == pygame.K_RETURN:
@@ -51,13 +51,20 @@ def main():
     pygame.init()
     pygame.display.set_caption("Tetris")
     surface = pygame.display.set_mode((renderer.WIDTH, renderer.HEIGHT))
+    pygame.key.set_repeat(300, 60)  # lets you hold Up/Down to scroll the 0-29 level picker
     clock = pygame.time.Clock()
     fonts = renderer.Fonts()
 
     game = Game()
+    repeat_on = True
 
     running = True
     while running:
+        want_repeat = game.state == MENU
+        if want_repeat != repeat_on:
+            pygame.key.set_repeat(300, 60) if want_repeat else pygame.key.set_repeat()
+            repeat_on = want_repeat
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
