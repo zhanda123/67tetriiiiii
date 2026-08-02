@@ -53,10 +53,10 @@ class PixelFont:
 
 class Fonts:
     def __init__(self):
-        self.huge = PixelFont(13, scale=3)
-        self.big = PixelFont(9, scale=3)
-        self.med = PixelFont(6, scale=3)
-        self.small = PixelFont(5, scale=3)
+        self.huge = PixelFont(22, scale=2)
+        self.big = PixelFont(15, scale=2)
+        self.med = PixelFont(11, scale=2)
+        self.small = PixelFont(9, scale=2)
 
 
 def draw_brick_background(surface):
@@ -234,7 +234,7 @@ def render(surface, game, fonts):
     draw_side_panel(surface, game, fonts)
 
     if game.state == game_module.MENU:
-        panel = pygame.Rect(0, 0, 460, 320)
+        panel = pygame.Rect(0, 0, 560, 400)
         panel.center = (WIDTH // 2, HEIGHT // 2)
         pygame.draw.rect(surface, PANEL_BG, panel)
         pygame.draw.rect(surface, CYAN_BORDER, panel, 4)
@@ -249,10 +249,11 @@ def render(surface, game, fonts):
                 (fonts.med, f"Starting Level: {game.starting_level:02d}  {level_hint}", WHITE),
                 (fonts.small, "UP / DOWN change level (0-29)", GRAY),
                 (fonts.small, "ENTER to start", GRAY),
-                (fonts.small, "1P controls: arrows or WASD, Z/X or Q/W rotate", GRAY),
-                (fonts.small, "2P: P1 = arrows + UP/RCTRL   P2 = WASD + LSHIFT", GRAY),
+                (fonts.small, "1P: arrows or WASD, Z/X or Q/W rotate", GRAY),
+                (fonts.small, "2P: P1 arrows + Up/RCtrl", GRAY),
+                (fonts.small, "2P: P2 WASD + LShift", GRAY),
             ],
-            y_start=panel.y + 16,
+            y_start=panel.y + 20,
         )
     elif game.state == game_module.PAUSED:
         draw_overlay_text(surface, fonts, [
