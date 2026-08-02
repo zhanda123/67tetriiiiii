@@ -86,3 +86,31 @@ class Randomizer:
             choice = self.rng.choice(PIECE_TYPES)
         self.previous = choice
         return choice
+
+
+class SharedSequence:
+    """One piece order shared by both players in 2-player mode, so a
+    fast player and a slow player still see the exact same Nth piece --
+    each side pulls by its own piece count rather than by call order,
+    so speed differences can't desync them."""
+
+    def __init__(self):
+        self._randomizer = Randomizer()
+        self._cache = []
+
+    def _at(self, index: int) -> str:
+        while len(self._cache) <= index:
+            self._cache.append(self._randomizer.next())
+        return self._cache[index]
+
+    def cursor(self):
+        """Returns a fresh zero-arg callable with its own position in
+        this shared sequence, starting at index 0."""
+        state = {"index": 0}
+
+        def _next():
+            kind = self._at(state["index"])
+            state["index"] += 1
+            return kind
+
+        return _next

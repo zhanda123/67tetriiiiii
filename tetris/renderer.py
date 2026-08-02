@@ -340,8 +340,8 @@ def render_two_player(surface, game_p1, game_p2, fonts, paused=False):
     title = fonts.med.render("2 PLAYER", True, TEXT_ORANGE)
     surface.blit(title, title.get_rect(center=title_rect.center))
 
-    draw_player_panel(surface, P1_PANEL_X, game_p1, fonts, "PLAYER 1", (120, 200, 255))
-    draw_player_panel(surface, P2_PANEL_X, game_p2, fonts, "PLAYER 2", (255, 150, 120))
+    draw_player_panel(surface, P1_PANEL_X, game_p1, fonts, "P1 ARROWS", (120, 200, 255))
+    draw_player_panel(surface, P2_PANEL_X, game_p2, fonts, "P2 WASD", (255, 150, 120))
 
     draw_playfield(surface, game_p1, fonts, x=P1_FIELD_X, y=TWO_FIELD_Y)
     draw_playfield(surface, game_p2, fonts, x=P2_FIELD_X, y=TWO_FIELD_Y)

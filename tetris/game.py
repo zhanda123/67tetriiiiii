@@ -16,12 +16,22 @@ GAME_OVER = "game_over"
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, piece_source=None):
+        # piece_source: optional zero-arg callable returning the next piece
+        # kind, e.g. a SharedSequence cursor so two Game instances in
+        # 2-player mode draw from the exact same piece order. Defaults to
+        # this instance's own independent Randomizer.
         self.state = MENU
         self.starting_level = 1
         self.player_mode = 1  # UI-only selection (1 or 2 players) used by the menu screen
+        self._piece_source = piece_source
         self.randomizer = Randomizer()
         self.reset()
+
+    def _draw_piece(self) -> str:
+        if self._piece_source is not None:
+            return self._piece_source()
+        return self.randomizer.next()
 
     def reset(self):
         self.board = Board()
@@ -30,8 +40,9 @@ class Game:
         self.top_score = getattr(self, "top_score", 0)
         self.lines = 0
         self.stats = {k: 0 for k in PIECE_TYPES}
-        self.randomizer = Randomizer()
-        self.next_kind = self.randomizer.next()
+        if self._piece_source is None:
+            self.randomizer = Randomizer()
+        self.next_kind = self._draw_piece()
         self.piece = None
         self.gravity_timer = 0
         self.lock_timer = 0
@@ -52,7 +63,7 @@ class Game:
 
     def _spawn_piece(self):
         kind = self.next_kind
-        self.next_kind = self.randomizer.next()
+        self.next_kind = self._draw_piece()
         self.stats[kind] += 1
         piece = Piece(kind, col=3, row=0)
         if not self.board.piece_fits(piece):

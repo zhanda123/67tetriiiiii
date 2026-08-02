@@ -9,6 +9,7 @@ import pygame
 
 from tetris.game import Game, MENU, PLAYING, PAUSED, GAME_OVER
 from tetris.constants import FPS, MAX_STARTING_LEVEL
+from tetris.pieces import SharedSequence
 from tetris import renderer
 
 
@@ -30,7 +31,7 @@ def handle_menu_keys(game, event):
 
 
 def handle_playing_keys(game, event):
-    if event.key in (pygame.K_UP, pygame.K_x, pygame.K_w):
+    if event.key in (pygame.K_UP, pygame.K_x, pygame.K_w, pygame.K_f, pygame.K_k):
         game.rotate(1)
     elif event.key in (pygame.K_z, pygame.K_q):
         game.rotate(-1)
@@ -53,11 +54,11 @@ def handle_game_over_keys(game, event):
 
 
 def handle_two_player_keys(game_p1, game_p2, event, two_paused):
-    if event.key in (pygame.K_UP,):
+    if event.key in (pygame.K_UP, pygame.K_k):
         game_p1.rotate(1)
     elif event.key == pygame.K_RCTRL:
         game_p1.rotate(-1)
-    elif event.key == pygame.K_w:
+    elif event.key in (pygame.K_w, pygame.K_f):
         game_p2.rotate(1)
     elif event.key == pygame.K_LSHIFT:
         game_p2.rotate(-1)
@@ -104,9 +105,10 @@ def main():
                             surface = pygame.display.set_mode((renderer.WIDTH, renderer.HEIGHT))
                             app_mode = "single"
                         else:
-                            game_p1 = Game()
+                            shared_pieces = SharedSequence()
+                            game_p1 = Game(piece_source=shared_pieces.cursor())
                             game_p1.start(level)
-                            game_p2 = Game()
+                            game_p2 = Game(piece_source=shared_pieces.cursor())
                             game_p2.start(level)
                             two_paused = False
                             surface = pygame.display.set_mode((renderer.TWO_WIDTH, renderer.TWO_HEIGHT))
