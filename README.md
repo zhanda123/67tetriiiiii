@@ -20,18 +20,41 @@ pip install -r requirements.txt
 python main.py
 ```
 
-## Controls
+## Menu
 
-| Key            | Action                        |
-|----------------|--------------------------------|
-| Left / Right   | Move piece                     |
-| Down           | Soft drop                      |
-| Up / X         | Rotate clockwise                |
-| Z              | Rotate counter-clockwise        |
-| Up / Down (menu) | Choose starting level (0-9)  |
-| Enter          | Start game / return to menu     |
-| P              | Pause / resume                  |
-| Esc            | Back to menu / quit              |
+- **1** / **2** — choose 1-player or 2-player mode
+- **Up** / **Down** — choose starting level (0-29; hold to scroll fast). 29 is
+  the real NES "kill screen" (1 frame per row).
+- **Enter** — start
+
+## Controls — 1 player
+
+Arrow keys and WASD both work at the same time, so use whichever you like:
+
+| Action              | Keys              |
+|---------------------|-------------------|
+| Move left / right   | Left/Right or A/D |
+| Soft drop            | Down or S         |
+| Rotate clockwise      | Up, X, or W      |
+| Rotate counter-clockwise | Z or Q        |
+| Pause / resume        | P                 |
+| Back to menu           | Esc               |
+
+## Controls — 2 player
+
+Player 1 uses the arrow cluster, Player 2 uses WASD, so both can play on one
+keyboard at once:
+
+| Action                | Player 1     | Player 2    |
+|------------------------|--------------|-------------|
+| Move left / right       | Left / Right | A / D       |
+| Soft drop                | Down        | S           |
+| Rotate clockwise           | Up        | W           |
+| Rotate counter-clockwise     | Right Ctrl | Left Shift |
+
+Pause (**P**) and back-to-menu (**Esc**) are shared. Each board tops out
+independently — the other player keeps going. When both are out, the higher
+score wins.
 
 ## Gameplay notes
 
@@ -41,7 +64,10 @@ python main.py
   by `(level + 1)`, matching the original scoring table.
 - Level advances every 10 lines cleared.
 - No hold piece, no hard drop, no ghost piece — just like the original.
-- STATISTICS panel tracks how many of each piece type has dropped.
+- STATISTICS panel (1-player only) tracks how many of each piece type has
+  dropped.
+- On-screen text is rendered as a tiny pixel font scaled up with hard edges,
+  for the same blocky low-res look as the original game's text.
 
 ## Project layout
 

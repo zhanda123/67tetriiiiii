@@ -19,6 +19,7 @@ class Game:
     def __init__(self):
         self.state = MENU
         self.starting_level = 1
+        self.player_mode = 1  # UI-only selection (1 or 2 players) used by the menu screen
         self.randomizer = Randomizer()
         self.reset()
 

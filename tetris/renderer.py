@@ -30,19 +30,33 @@ LEFT_PANEL_RECT = pygame.Rect(MARGIN, PLAYFIELD_Y - BORDER, LEFT_PANEL_W, PLAYFI
 RIGHT_PANEL_X = PLAYFIELD_X + PLAYFIELD_W + BORDER + MARGIN
 
 
-def _font(size, bold=True):
-    name = pygame.font.match_font("couriernew,consolas,dejavusansmono,monospace")
-    f = pygame.font.Font(name, size)
-    f.set_bold(bold)
-    return f
+class PixelFont:
+    """Renders text tiny with anti-aliasing off, then scales it up with
+    nearest-neighbor so every glyph edge stays hard-pixelated -- the
+    blocky low-res look of the original game's on-screen text, rather
+    than a smooth modern monospace font."""
+
+    def __init__(self, base_size, scale=3, bold=True):
+        name = pygame.font.match_font("couriernew,consolas,dejavusansmono,monospace")
+        self.font = pygame.font.Font(name, base_size)
+        self.font.set_bold(bold)
+        self.scale = scale
+
+    def render(self, text, antialias=False, color=WHITE):
+        surf = self.font.render(text, False, color)
+        w, h = surf.get_size()
+        return pygame.transform.scale(surf, (max(1, w * self.scale), max(1, h * self.scale)))
+
+    def get_height(self):
+        return self.font.get_height() * self.scale
 
 
 class Fonts:
     def __init__(self):
-        self.huge = _font(40)
-        self.big = _font(26)
-        self.med = _font(18)
-        self.small = _font(14)
+        self.huge = PixelFont(13, scale=3)
+        self.big = PixelFont(9, scale=3)
+        self.med = PixelFont(6, scale=3)
+        self.small = PixelFont(5, scale=3)
 
 
 def draw_brick_background(surface):
@@ -94,8 +108,8 @@ def _colors_for_cell(level, value):
     return (color, _shade(color))
 
 
-def draw_playfield(surface, game, fonts):
-    rect = pygame.Rect(PLAYFIELD_X, PLAYFIELD_Y, PLAYFIELD_W, PLAYFIELD_H)
+def draw_playfield(surface, game, fonts, x=PLAYFIELD_X, y=PLAYFIELD_Y):
+    rect = pygame.Rect(x, y, PLAYFIELD_W, PLAYFIELD_H)
     draw_bordered_box(surface, rect)
 
     board = game.board
@@ -106,8 +120,8 @@ def draw_playfield(surface, game, fonts):
             value = board.grid[r][c]
             if value == 0:
                 continue
-            px = PLAYFIELD_X + c * CELL
-            py = PLAYFIELD_Y + (r - BUFFER_ROWS) * CELL
+            px = x + c * CELL
+            py = y + (r - BUFFER_ROWS) * CELL
             if flashing and r in game.clearing_rows:
                 draw_block(surface, px, py, CELL, (WHITE, GRAY))
             else:
@@ -118,17 +132,17 @@ def draw_playfield(surface, game, fonts):
         for c, r in game.piece.cells():
             if r < BUFFER_ROWS:
                 continue
-            px = PLAYFIELD_X + c * CELL
-            py = PLAYFIELD_Y + (r - BUFFER_ROWS) * CELL
+            px = x + c * CELL
+            py = y + (r - BUFFER_ROWS) * CELL
             draw_block(surface, px, py, CELL, colors)
 
     # subtle grid lines
     for c in range(COLS + 1):
-        x = PLAYFIELD_X + c * CELL
-        pygame.draw.line(surface, (20, 20, 28), (x, PLAYFIELD_Y), (x, PLAYFIELD_Y + PLAYFIELD_H))
+        gx = x + c * CELL
+        pygame.draw.line(surface, (20, 20, 28), (gx, y), (gx, y + PLAYFIELD_H))
     for r in range(ROWS + 1):
-        y = PLAYFIELD_Y + r * CELL
-        pygame.draw.line(surface, (20, 20, 28), (PLAYFIELD_X, y), (PLAYFIELD_X + PLAYFIELD_W, y))
+        gy = y + r * CELL
+        pygame.draw.line(surface, (20, 20, 28), (x, gy), (x + PLAYFIELD_W, gy))
 
 
 def draw_mini_piece(surface, kind, level, cx, cy, cell=14):
@@ -202,12 +216,13 @@ def draw_side_panel(surface, game, fonts):
     surface.blit(level_val, level_val.get_rect(centerx=level_rect.centerx, top=level_rect.y + 26))
 
 
-def draw_overlay_text(surface, fonts, lines, y_start=None):
+def draw_overlay_text(surface, fonts, lines, y_start=None, center_x=None, height=HEIGHT):
+    center_x = WIDTH // 2 if center_x is None else center_x
     total_h = sum(f.get_height() for f, _, _ in lines) + 10 * (len(lines) - 1)
-    y = y_start if y_start is not None else (HEIGHT - total_h) // 2
+    y = y_start if y_start is not None else (height - total_h) // 2
     for font, text, color in lines:
         rendered = font.render(text, True, color)
-        surface.blit(rendered, rendered.get_rect(centerx=WIDTH // 2, top=y))
+        surface.blit(rendered, rendered.get_rect(centerx=center_x, top=y))
         y += font.get_height() + 10
 
 
@@ -219,21 +234,25 @@ def render(surface, game, fonts):
     draw_side_panel(surface, game, fonts)
 
     if game.state == game_module.MENU:
-        panel = pygame.Rect(0, 0, 420, 260)
+        panel = pygame.Rect(0, 0, 460, 320)
         panel.center = (WIDTH // 2, HEIGHT // 2)
         pygame.draw.rect(surface, PANEL_BG, panel)
         pygame.draw.rect(surface, CYAN_BORDER, panel, 4)
         level_hint = "KILL SCREEN" if game.starting_level >= 29 else ("near kill screen" if game.starting_level >= 19 else "")
+        mode_text = "1 PLAYER" if game.player_mode == 1 else "2 PLAYER"
         draw_overlay_text(
             surface, fonts,
             [
                 (fonts.huge, "TETRIS", TEXT_ORANGE),
+                (fonts.med, f"Mode: {mode_text}", WHITE),
+                (fonts.small, "1 / 2 to choose mode", GRAY),
                 (fonts.med, f"Starting Level: {game.starting_level:02d}  {level_hint}", WHITE),
                 (fonts.small, "UP / DOWN change level (0-29)", GRAY),
                 (fonts.small, "ENTER to start", GRAY),
-                (fonts.small, "LEFT/RIGHT move  Z/X rotate  DOWN soft drop", GRAY),
+                (fonts.small, "1P controls: arrows or WASD, Z/X or Q/W rotate", GRAY),
+                (fonts.small, "2P: P1 = arrows + UP/RCTRL   P2 = WASD + LSHIFT", GRAY),
             ],
-            y_start=panel.y + 20,
+            y_start=panel.y + 16,
         )
     elif game.state == game_module.PAUSED:
         draw_overlay_text(surface, fonts, [
@@ -246,3 +265,114 @@ def render(surface, game, fonts):
             (fonts.med, f"Score {game.score}", WHITE),
             (fonts.small, "Press ENTER for menu", GRAY),
         ])
+
+
+# --- Two-player layout: two playfields side by side, each with its own
+# compact NEXT / SCORE / LEVEL / LINES panel. ---
+
+TWO_PANEL_W = 160
+TWO_TOP_H = 50
+TWO_BOARD_GAP = 32
+
+TWO_FIELD_Y = MARGIN + TWO_TOP_H + MARGIN + BORDER
+
+_tx = MARGIN
+P1_PANEL_X = _tx
+_tx += TWO_PANEL_W + MARGIN
+P1_FIELD_X = _tx + BORDER
+_tx += BORDER + PLAYFIELD_W + BORDER + TWO_BOARD_GAP
+P2_FIELD_X = _tx + BORDER
+_tx += BORDER + PLAYFIELD_W + BORDER + MARGIN
+P2_PANEL_X = _tx
+_tx += TWO_PANEL_W + MARGIN
+
+TWO_WIDTH = _tx
+TWO_HEIGHT = TWO_FIELD_Y + PLAYFIELD_H + BORDER + MARGIN
+
+
+def draw_player_panel(surface, x, game, fonts, label, label_color):
+    w = TWO_PANEL_W
+    y = TWO_FIELD_Y
+
+    label_rect = pygame.Rect(x, y, w, 36)
+    draw_bordered_box(surface, label_rect)
+    text = fonts.med.render(label, True, label_color)
+    surface.blit(text, text.get_rect(center=label_rect.center))
+
+    y += 36 + MARGIN
+    next_rect = pygame.Rect(x, y, w, 96)
+    draw_bordered_box(surface, next_rect, "NEXT", fonts)
+    draw_mini_piece(surface, game.next_kind, game.level, next_rect.centerx, next_rect.centery + 8, cell=16)
+
+    y += 96 + MARGIN
+    score_rect = pygame.Rect(x, y, w, 64)
+    draw_bordered_box(surface, score_rect)
+    score_label = fonts.small.render("SCORE", True, GRAY)
+    score_val = fonts.med.render(f"{game.score:06d}", True, WHITE)
+    surface.blit(score_label, (score_rect.x + 8, score_rect.y + 6))
+    surface.blit(score_val, (score_rect.x + 8, score_rect.y + 24))
+
+    y += 64 + MARGIN
+    level_rect = pygame.Rect(x, y, w, 84)
+    draw_bordered_box(surface, level_rect)
+    level_label = fonts.small.render("LEVEL", True, GRAY)
+    level_val = fonts.med.render(f"{game.level:02d}", True, WHITE)
+    lines_label = fonts.small.render("LINES", True, GRAY)
+    lines_val = fonts.med.render(f"{game.lines:03d}", True, WHITE)
+    surface.blit(level_label, (level_rect.x + 8, level_rect.y + 6))
+    surface.blit(level_val, (level_rect.x + 8, level_rect.y + 22))
+    surface.blit(lines_label, (level_rect.x + 8, level_rect.y + 44))
+    surface.blit(lines_val, (level_rect.x + 8, level_rect.y + 60))
+
+
+def _player_over(game):
+    return game.state == game_module.GAME_OVER and game.game_over_fill_row >= game.board.total_rows
+
+
+def render_two_player(surface, game_p1, game_p2, fonts, paused=False):
+    draw_brick_background(surface)
+
+    title_rect = pygame.Rect(0, MARGIN + BORDER, 0, TWO_TOP_H - 2 * BORDER)
+    title_rect.w = TWO_WIDTH - 2 * MARGIN
+    title_rect.centerx = TWO_WIDTH // 2
+    draw_bordered_box(surface, title_rect)
+    title = fonts.med.render("2 PLAYER", True, TEXT_ORANGE)
+    surface.blit(title, title.get_rect(center=title_rect.center))
+
+    draw_player_panel(surface, P1_PANEL_X, game_p1, fonts, "PLAYER 1", (120, 200, 255))
+    draw_player_panel(surface, P2_PANEL_X, game_p2, fonts, "PLAYER 2", (255, 150, 120))
+
+    draw_playfield(surface, game_p1, fonts, x=P1_FIELD_X, y=TWO_FIELD_Y)
+    draw_playfield(surface, game_p2, fonts, x=P2_FIELD_X, y=TWO_FIELD_Y)
+
+    round_over = _player_over(game_p1) and _player_over(game_p2)
+    for game, field_x in ((game_p1, P1_FIELD_X), (game_p2, P2_FIELD_X)):
+        if _player_over(game) and not round_over:
+            overlay_rect = pygame.Rect(field_x, TWO_FIELD_Y, PLAYFIELD_W, PLAYFIELD_H)
+            shade = pygame.Surface(overlay_rect.size, pygame.SRCALPHA)
+            shade.fill((0, 0, 0, 160))
+            surface.blit(shade, overlay_rect.topleft)
+            draw_overlay_text(
+                surface, fonts,
+                [(fonts.big, "TOPPED OUT", TEXT_ORANGE)],
+                y_start=overlay_rect.centery - 20,
+                center_x=overlay_rect.centerx,
+            )
+
+    if paused:
+        draw_overlay_text(surface, fonts, [
+            (fonts.huge, "PAUSED", WHITE),
+            (fonts.small, "Press P to resume", GRAY),
+        ], center_x=TWO_WIDTH // 2, height=TWO_HEIGHT)
+    elif _player_over(game_p1) and _player_over(game_p2):
+        if game_p1.score > game_p2.score:
+            result = "PLAYER 1 WINS"
+        elif game_p2.score > game_p1.score:
+            result = "PLAYER 2 WINS"
+        else:
+            result = "TIE GAME"
+        draw_overlay_text(surface, fonts, [
+            (fonts.huge, "GAME OVER", TEXT_ORANGE),
+            (fonts.med, result, WHITE),
+            (fonts.small, "Press ENTER for menu", GRAY),
+        ], center_x=TWO_WIDTH // 2, height=TWO_HEIGHT)
